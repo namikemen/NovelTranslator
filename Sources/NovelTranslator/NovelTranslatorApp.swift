@@ -40,6 +40,13 @@ struct NovelTranslatorApp: App {
         }
         .windowStyle(.titleBar)
         .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates...") {
+                    Task {
+                        await viewModel.updateManager.checkForUpdates(silent: false)
+                    }
+                }
+            }
             CommandGroup(after: .appSettings) {
                 Button("Model Prompts...") {
                     viewModel.showPromptSettingsSheet = true
@@ -185,6 +192,27 @@ struct ContentView: View {
         }
         .sheet(isPresented: $viewModel.showModelManagerSheet) {
             ModelManagerSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.updateManager.showUpdateSheet) {
+            if let release = viewModel.updateManager.updateAvailable {
+                UpdateAvailableSheet(updateManager: viewModel.updateManager, release: release)
+            }
+        }
+        .alert("NovelTranslator is Up to Date", isPresented: $viewModel.updateManager.isUpToDateAlertShown) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("You are currently running the newest version (v\(viewModel.updateManager.currentAppVersion)).")
+        }
+        .alert("Update Check Failed", isPresented: Binding(
+            get: { viewModel.updateManager.checkError != nil },
+            set: { if !$0 { viewModel.updateManager.checkError = nil } }
+        )) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.updateManager.checkError ?? "An error occurred while checking for updates.")
+        }
+        .task {
+            await viewModel.updateManager.checkForUpdates(silent: true)
         }
         .alert("Analyze Characters for Vietnamese?", isPresented: $viewModel.showUnanalyzedBibleAlert) {
             Button("Scan All Chapters (AI)") {
@@ -383,6 +411,25 @@ struct ContentView: View {
                         .foregroundColor(.green)
                         .lineLimit(1)
                 }
+                .fixedSize()
+            }
+
+            if let release = viewModel.updateManager.updateAvailable {
+                Button(action: { viewModel.updateManager.showUpdateSheet = true }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .foregroundColor(.accentColor)
+                        Text("Update \(release.cleanVersionString)")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.accentColor.opacity(0.12))
+                    .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
+                .help("New release \(release.tagName) available. Click to review and download.")
                 .fixedSize()
             }
 

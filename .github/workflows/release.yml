@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.1)'
+        required: true
+        default: 'v1.0.1'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Release macOS Bundle
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Resolve Version Tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building Release for Tag: $TAG (App Version: $VERSION)"
+
+      - name: Inspect Swift & Toolchain
+        run: |
+          swift --version
+
+      - name: Run Swift Test Suite
+        run: |
+          swift test
+
+      - name: Build and Package App Bundle
+        env:
+          APP_VERSION: ${{ steps.vars.outputs.version }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          chmod +x bundle.sh
+          ./bundle.sh
+
+      - name: Create Release Zip Archive & Checksum
+        run: |
+          zip -r -y -9 NovelTranslator-macOS.zip NovelTranslator.app
+          shasum -a 256 NovelTranslator-macOS.zip > NovelTranslator-macOS.zip.sha256
+          ls -lh NovelTranslator-macOS.zip*
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.vars.outputs.tag }}
+          VERSION: ${{ steps.vars.outputs.version }}
+        run: |
+          # If release exists, update artifacts; otherwise create new release
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists. Uploading new assets..."
+            gh release upload "$TAG" \
+              NovelTranslator-macOS.zip \
+              NovelTranslator-macOS.zip.sha256 \
+              --clobber
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" \
+              NovelTranslator-macOS.zip \
+              NovelTranslator-macOS.zip.sha256 \
+              --title "NovelTranslator $TAG" \
+              --generate-notes
+          fi

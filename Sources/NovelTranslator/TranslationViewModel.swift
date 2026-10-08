@@ -58,6 +58,9 @@ public class TranslationViewModel: ObservableObject {
     @Published public var activeCheckpointId: String? = nil
     @Published public var saveProgressFeedback: String? = nil
 
+    // In-App Release & Update Checker
+    @Published public var updateManager: AppUpdateManager = AppUpdateManager.shared
+
     // Document Mode State
     @Published public var sourceDocument: String = ""
     @Published public var translatedDocument: String = ""

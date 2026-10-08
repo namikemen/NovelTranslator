@@ -58,6 +58,11 @@ Translating literary fiction, web novels, and EPUB eBooks with generic machine t
 - **Multi-Book Session Manager**: Switch between multiple ongoing novel translations seamlessly.
 - **Selective & Re-translation**: Re-translate individual chapters or selective paragraphs without re-running the entire book.
 
+### 6. Automated GitHub Releases & In-App Updates
+- **GitHub Actions Release CI**: Tagging a release (`v1.0.0`) automatically triggers tests, builds the signed `.app` bundle, archives `NovelTranslator-macOS.zip`, computes SHA256 checksums, and publishes the GitHub Release.
+- **In-App Update Checker**: Checks for new versions via GitHub Releases API silently on launch or manually via `NovelTranslator` -> `Check for Updates...`.
+- **Live Update Sheet & Toolbar Pill**: When a new version is released, an update pill appears in the toolbar with an interactive sheet previewing release notes, direct download link, and GitHub release page.
+
 ---
 
 ## Architecture Overview
@@ -83,7 +88,9 @@ Sources/NovelTranslator/
 ├── PromptSettingsSheet.swift      # Customizable prompts for translation and analysis
 ├── LLMTranslationService.swift    # REST client for Ollama/OpenAI, task throttling, output sanitizer
 ├── CheckpointManager.swift        # Multi-session state persistence and resume management
-└── EnvConfigManager.swift         # Multi-tiered configuration loader (.env, UserDefaults)
+├── EnvConfigManager.swift         # Multi-tiered configuration loader (.env, UserDefaults)
+├── AppUpdateManager.swift         # GitHub Releases version comparison and update coordinator
+└── UpdateAvailableSheet.swift      # Interactive release notes preview and download sheet
 ```
 
 ---
