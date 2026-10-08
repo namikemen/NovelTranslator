@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Debug NovelTranslator",
+            "target": "NovelTranslator",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug NovelTranslator"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Release NovelTranslator",
+            "target": "NovelTranslator",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release NovelTranslator"
+        }
+    ]
+}
